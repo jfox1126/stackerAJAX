@@ -6,6 +6,13 @@ $(document).ready( function() {
 		var tags = $(this).find("input[name='tags']").val();
 		getUnanswered(tags);
 	});
+	$('.inspiration-getter').submit(function(event) {
+		$('.results').html('');
+		$('.reputation-list').html('');
+		$('.user-list').html('');
+		var tag = $(this).find("input[name='answerers']").val();
+		getInspiration(tag);
+	});
 });
 
 // this function takes the question object returned by StackOverflow 
@@ -41,7 +48,6 @@ var showQuestion = function(question) {
 	return result;
 };
 
-
 // this function takes the results object from StackOverflow
 // and creates info about search results to be appended to DOM
 var showSearchResults = function(query, resultNum) {
@@ -73,6 +79,7 @@ var getUnanswered = function(tags) {
 		type: "GET",
 		})
 	.done(function(result){
+		console.log(result);
 		var searchResults = showSearchResults(request.tagged, result.items.length);
 
 		$('.search-results').html(searchResults);
@@ -84,6 +91,48 @@ var getUnanswered = function(tags) {
 	})
 	.fail(function(jqXHR, error, errorThrown){
 		var errorElem = showError(error);
+		$('.search-results').append(errorElem);
+	});
+};
+
+var getInspiration = function (tag) {
+	var result = $.ajax({
+	    url: "http://api.stackexchange.com/2.2/tags/"+tag+"/top-answerers/all_time",
+	    type: "GET",
+	    data:{"site":"stackoverflow"},
+	    dataType: "jsonp",
+	})
+	.done(function(result) {
+	    console.log("HTTP Request Succeeded");
+	    console.log(result);
+	    console.log(result.items[0].user.display_name);
+
+	    var searchResults = showSearchResults(tag, result.items.length);
+	    $('.search-results').html(searchResults);
+
+		$.each(result.items, function (i, item) {
+			resultRep = "<div class = 'reputation-entry'>"+item.user.reputation+"</div>";
+			$('.reputation-list').append(resultRep);
+			resultUser = "<div class = 'reputation-entry'><a href = '"+item.user.link+"'>"+item.user.display_name+"</div>";
+			$('.user-list').append(resultUser);
+			//var resultUser = $('.user-entry').clone();
+		});
+		var inspirationResults = $('.inspiration').clone();
+		$('.results').append(inspirationResults);
+
+		/*var reputationList = $('.reputation-list').clone();
+		var userList = $('.user-list').clone();
+		$('.results').append(reputationList);
+		$('.results').append(userList);*/
+
+	    /*$.each(result.items, function(i, item) {
+	    	$('.inspiration').clone().appendTo($('.results'));
+
+	    })*/
+	})
+	.fail(function(jqXHR, textStatus, errorThrown) {
+	    console.log("HTTP Request Failed");
+		var errorElem = errorThrown(error);
 		$('.search-results').append(errorElem);
 	});
 };
